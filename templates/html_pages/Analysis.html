@@ -1,0 +1,162 @@
+{% extends "base/base.html" %}
+{% block main %}
+    <style>
+        #right {
+            text-align: center;
+            width: 100%;
+            margin: 0 auto;
+        }
+
+        h1 {
+            margin: 20px 0;
+        }
+
+        h3 {
+            margin: 10px 0;
+        }
+
+
+    </style>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            // 监听下拉框变化事件
+            $('#Type, #companySelect, #startDatetime, #endDatetime').change(function () {
+                // 获取选项值
+                var type = $('#Type').val();
+                var company = $('#companySelect').val();
+                var start_time = $('#startDatetime').val();
+                var end_time = $('#endDatetime').val();
+
+                // 发送 AJAX 请求到后端获取数据
+                $.ajax({
+                    url: '/plot',
+                    type: 'GET',
+                    data: {
+                        type: type,
+                        company: company,
+                        start_time: start_time,
+                        end_time: end_time
+                    },
+                    success: function (response) {
+                        // 调用函数绘制图表
+                        drawChart(response.data);
+                    }
+                });
+            });
+
+            // 获取选项值
+            var type = $('#Type').val();
+            var company = $('#companySelect').val();
+            var start_time = $('#startDatetime').val();
+            var end_time = $('#endDatetime').val();
+
+            // 发送 AJAX 请求到后端获取数据
+            $.ajax({
+                url: '/plot',
+                type: 'GET',
+                data: {
+                    type: type,
+                    company: company,
+                    start_time: start_time,
+                    end_time: end_time
+                },
+                success: function (response) {
+                    // 调用函数绘制图表
+                    drawChart(response.data);
+                }
+            });
+
+
+            // 函数用于绘制echarts图表
+            function drawChart(data) {
+                // 初始化echarts实例
+                var myChart = echarts.init(document.getElementById('plot'));
+
+                // 配置项
+                var option = {
+                    title: {
+                        text: 'Stock Data'
+                    },
+                    tooltip: {
+                        trigger: 'axis'
+                    },
+                    legend: {
+                        data: ['open', 'high', 'low', 'close', 'volume']
+                    },
+                    xAxis: {
+                        type: 'category',
+                        data: data.map(function (item) {
+                            return item.datetime;
+                        })
+                    },
+                    yAxis: {
+                        type: 'value'
+                    },
+                    series: [
+                        {
+                            name: 'open',
+                            type: 'line',
+                            data: data.map(function (item) {
+                                return item.open;
+                            })
+                        },
+                        {
+                            name: 'high',
+                            type: 'line',
+                            data: data.map(function (item) {
+                                return item.high;
+                            })
+                        },
+                        {
+                            name: 'low',
+                            type: 'line',
+                            data: data.map(function (item) {
+                                return item.low;
+                            })
+                        },
+                        {
+                            name: 'close',
+                            type: 'line',
+                            data: data.map(function (item) {
+                                return item.close;
+                            })
+                        },
+                        {
+                            name: 'volume',
+                            type: 'bar',
+                            data: data.map(function (item) {
+                                return item.volume;
+                            })
+                        }
+                    ]
+                };
+
+                // 使用配置项绘制图表
+                myChart.setOption(option);
+            }
+        });
+    </script>
+    <div id="right">
+        <h1>Stock Database</h1>
+        <label for="Type">Type:</label>
+        <select id="Type">
+            <option value="Day">By Day</option>
+            <option value="Hour">By Hour</option>
+            <!-- 添加更多公司选项 -->
+        </select>
+        <label for="companySelect">Company:</label>
+        <select id="companySelect">
+            {% for com in com_list %}
+                <option value="{{ com }}">{{ com }}</option>
+            {% endfor %}
+            <!-- 添加更多公司选项 -->
+        </select>
+        <label for="startDatetime">开始时间:</label>
+        <input type="date" id="startDatetime" value="2024-01-01">
+        <label for="endDatetime">结束时间:</label>
+        <input type="date" id="endDatetime" value="2024-01-31">
+        <div id="plot" style="width: 60rem;height: 40rem;margin-top: 5rem;margin-left: auto;margin-right: auto"></div>
+
+    </div>
+{% endblock %}
